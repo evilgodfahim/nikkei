@@ -3,27 +3,11 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 import re
 
-# Each entry: (feed_url, archive_prefix)
-# Economist uses a fixed slug; PS uses /newest/ to land on the latest capture
 rss_feeds = [
-    ("https://www.economist.com/briefing/rss.xml",                       "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/the-economist-explains/rss.xml",         "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/leaders/rss.xml",                        "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/asia/rss.xml",                           "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/china/rss.xml",                          "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/international/rss.xml",                  "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/united-states/rss.xml",                  "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/finance-and-economics/rss.xml",          "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/the-world-this-week/rss.xml",            "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/science-and-technology/rss.xml",         "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/europe/rss.xml",                         "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/business/rss.xml",                       "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/graphic-detail/rss.xml",                 "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/rss/middle_east_and_africa_rss.xml",     "https://archive.is/o/nuunc/"),
-    ("https://www.economist.com/the-americas/rss.xml",                   "https://archive.is/o/nuunc/")]
+    ("https://asia.nikkei.com/rss/feed/nar", "https://archive.is/o/EGrwV/"),
+]
 
 def escape_xml(text):
-    """Escape special XML characters"""
     if not text:
         return ""
     text = str(text)
@@ -35,7 +19,6 @@ def escape_xml(text):
     return text
 
 def extract_image(entry):
-    """Extract image from multiple possible sources in feed entry"""
     if hasattr(entry, "media_content") and entry.media_content:
         for media in entry.media_content:
             if "url" in media:
@@ -68,7 +51,6 @@ def extract_image(entry):
 
 def fetch_items(feed_tuples):
     all_items = []
-    images_found = 0
 
     for feed_url, archive_prefix in feed_tuples:
         print(f"Fetching: {feed_url}")
@@ -83,7 +65,6 @@ def fetch_items(feed_tuples):
 
                 image_url = extract_image(entry)
                 if image_url:
-                    images_found += 1
                     print(f"  📸 Image found: {image_url[:60]}...")
 
                 raw_date = entry.get("published", "")
@@ -91,7 +72,7 @@ def fetch_items(feed_tuples):
                     pub_dt = parsedate_to_datetime(raw_date)
                     if pub_dt.tzinfo is None:
                         pub_dt = pub_dt.replace(tzinfo=timezone.utc)
-                    pub_str = raw_date  # keep original string for the XML
+                    pub_str = raw_date
                 except Exception:
                     pub_dt = datetime.now(timezone.utc)
                     pub_str = pub_dt.strftime("%a, %d %b %Y %H:%M:%S +0000")
@@ -116,13 +97,12 @@ def fetch_items(feed_tuples):
     return limited_items
 
 def create_rss(items):
-    """Create RSS XML manually to avoid namespace issues"""
     xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>']
     xml_lines.append('<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">')
     xml_lines.append('  <channel>')
-    xml_lines.append('    <title>Combined Economist + Project Syndicate RSS Feed</title>')
+    xml_lines.append('    <title>Nikkei Asia RSS Feed</title>')
     xml_lines.append('    <link>https://yourusername.github.io/combined.xml</link>')
-    xml_lines.append('    <description>Combined feed: The Economist and Project Syndicate with archive.is links</description>')
+    xml_lines.append('    <description>Nikkei Asia feed with archive.is links</description>')
 
     for item in items:
         xml_lines.append('    <item>')
@@ -145,7 +125,7 @@ def create_rss(items):
 
 if __name__ == "__main__":
     print("=" * 70)
-    print("Economist + Project Syndicate RSS Feed Aggregator")
+    print("Nikkei Asia RSS Feed Aggregator")
     print("=" * 70)
 
     items = fetch_items(rss_feeds)
